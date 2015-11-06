@@ -23,7 +23,7 @@ using MonoDroid.Dialog;
 
 namespace Android.NUnitLite.UI {
 	
-	public class ActivityElement : StringElement {
+    class ActivityElement : FormattedElement {
 		
 		Type activity;
 		

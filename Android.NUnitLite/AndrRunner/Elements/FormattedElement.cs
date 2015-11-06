@@ -32,6 +32,10 @@ namespace Android.NUnitLite.UI {
 		public FormattedElement (string caption) : base (caption)
 		{
 		}
+
+        public FormattedElement(string caption, string value) : base(caption, value)
+        {
+        }
 				
 		public string Indicator {
 			get; set;
@@ -43,6 +47,8 @@ namespace Android.NUnitLite.UI {
 						
             var parms = new RelativeLayout.LayoutParams(ViewGroup.LayoutParams.WrapContent,
                                                         ViewGroup.LayoutParams.WrapContent);
+
+            view.SetMinimumHeight(150);
             parms.SetMargins(5, 3, 5, 0);
             parms.AddRule(LayoutRules.AlignParentLeft);
 

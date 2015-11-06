@@ -16,7 +16,8 @@
 
 using System;
 
-using NUnitLite;
+using NUnit.Framework.Api;
+using NUnit.Framework.Internal;
 
 namespace Android.NUnitLite.UI {
 	
@@ -25,34 +26,36 @@ namespace Android.NUnitLite.UI {
 		string name;
 		TestResult result;
 		
-		public TestElement (ITest test) : base (String.Empty)
+        public TestElement (ITest test, AndroidRunner runner) : base (String.Empty)
 		{
 			if (test == null)
 				throw new ArgumentNullException ("test");
 		
 			Test = test;
 			name = test.FullName ?? test.Name;
-			Caption = GetCaption ();
+			Runner = runner;
 		}
+
+		protected AndroidRunner Runner { get; private set; }
 		
 		protected string Name {
 			get { return name; }
 		}
 				
 		protected TestResult Result {
-			get {
-				AndroidRunner.Results.TryGetValue (name, out result);
-				return result;
-			}
+			get { return result ?? new TestCaseResult (Test as TestMethod); }
+			set { result = value; }
 		}
 		
 		protected ITest Test { get; private set; }
 		
-		abstract protected string GetCaption ();
-		
-		public void Update ()
+		public void Update (TestResult result)
 		{
-			SetCaption (GetCaption ());
+			Result = result;
+
+			Update ();
 		}
+
+		abstract public void Update ();
 	}
 }

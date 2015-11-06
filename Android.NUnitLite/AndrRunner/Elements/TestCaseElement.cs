@@ -20,34 +20,47 @@ using Android.App;
 using Android.Content;
 using Android.Views;
 
-using NUnitLite;
+using NUnit.Framework.Internal;
+using NUnit.Framework.Api;
+using NUnit.Framework;
+using MonoDroid.NUnit;
 
 namespace Android.NUnitLite.UI {
 	
 	class TestCaseElement : TestElement {
 		
-		public TestCaseElement (TestCase test) : base (test)
+		public TestCaseElement (TestMethod test, AndroidRunner runner) : base (test, runner)
 		{
 			if (test.RunState == RunState.Runnable)
 				Indicator = "..."; // hint there's more
+
+            Caption = test.Name;
 		}
-		
-		protected override string GetCaption ()
+
+		public override void Update ()
 		{
-			if (TestCase.RunState == RunState.Ignored) {
-				return String.Format ("<b>{0}</b><br><font color='#FF7700'>{1}: {2}</font>", 
-					TestCase.Name, TestCase.RunState, TestCase.IgnoreReason); 
-			} else if (Result == null) {
-				return String.Format ("<b>{0}</b><br><font color='grey'>{1}</font>", TestCase.Name, TestCase.RunState);
-			} else if (Result.IsSuccess) {
-				return String.Format ("<b>{0}</b><br><font color='green'>Success!</font>", TestCase.Name); 
-			} else {
-				return String.Format ("<b>{0}</b><br><font color='red'>{1}</font>", TestCase.Name, Result.Message); 
-			}
+            if (Result.IsIgnored ()) {
+                Caption = String.Format ("<b>{0}</b>:\n <font color='#FF7700'>{1}</font>", 
+                    TestCase.FullName, Result.GetMessage()); 
+            } else if (Result.IsSuccess () || Result.IsInconclusive ()) {
+                int counter = Result.AssertCount;
+                Caption = String.Format ("<b>{0}</b>:\n <font color='green'>{1} {2} ms for {3} assertion{4}</font>",
+                    TestCase.FullName,
+                    Result.IsInconclusive () ? "Inconclusive." : "Success!",
+                    Result.Duration.TotalMilliseconds, counter,
+                    counter == 1 ? String.Empty : "s");
+            } else if (Result.IsFailure ()) {
+                Caption = String.Format("<b>{0}</b>:\n <font color='red'>{1}</font>", TestCase.FullName, Result.GetMessage ());
+            } else {
+                // Assert.Ignore falls into this
+                Caption = Result.GetMessage ();
+            }
+
+            SetCaption(Caption);
 		}
 		
-		public TestCase TestCase {
-			get { return Test as TestCase; }
+		public TestMethod TestCase {
+			get { return Test as TestMethod; }
 		}
 		
 		public override View GetView (Context context, View convertView, ViewGroup parent)
@@ -60,22 +73,34 @@ namespace Android.NUnitLite.UI {
 				AndroidRunner runner = AndroidRunner.Runner;
 				if (!runner.OpenWriter ("Run " + TestCase.FullName, context))
 					return;
+
+				var suite = (TestCase.Parent as TestSuite);
+				var testContext = TestExecutionContext.CurrentContext;
+                testContext.TestObject = Reflect.Construct (TestCase.Method.ReflectedType, suite.arguments);
+
 				
 				try {
-					TestCase.Run (runner);
+					suite.GetOneTimeSetUpCommand ().Execute (testContext);
+					Run ();
+					suite.GetOneTimeTearDownCommand ().Execute (testContext);
 				}
 				finally {
 					runner.CloseWriter ();
 				}
 
-				if (!Result.IsSuccess) {
+				if ((TestCase.RunState == RunState.Runnable) && !Result.IsSuccess()) {
 					Intent intent = new Intent (context, typeof (TestResultActivity));
 					intent.PutExtra ("TestCase", Name);
 					intent.AddFlags (ActivityFlags.NewTask);			
 					context.StartActivity (intent);
-				}
+				} 
 			};
 			return view;
+		}
+
+		public void Run ()
+		{
+			Update (Runner.Run (TestCase));
 		}
 	}
 }

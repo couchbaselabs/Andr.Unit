@@ -23,16 +23,20 @@ using Android.App;
 using Android.Content;
 using Android.Widget;
 
-using NUnitLite;
+using NUnit.Framework.Api;
+using NUnit.Framework.Internal;
+using MonoDroid.NUnit;
+using NUnit.Framework.Internal.WorkItems;
 
 namespace Android.NUnitLite {
 	
-	public class AndroidRunner : TestListener {
+	public class AndroidRunner : ITestListener {
 		
 		Options options;
 		
 		private AndroidRunner ()
 		{
+			Filter = TestFilter.Empty;
 		}
 		
 		public bool AutoStart { get; set; }
@@ -49,8 +53,15 @@ namespace Android.NUnitLite {
 		}
 		
 		#region writer
+
+		public TestResult Result { get; set; }
 		
 		public TextWriter Writer { get; set; }
+
+		public ITestFilter Filter {
+			get;
+			set;
+		}
 		
 		public bool OpenWriter (string message, Context activity)
 		{
@@ -125,20 +136,21 @@ namespace Android.NUnitLite {
 
 		Stack<DateTime> time = new Stack<DateTime> ();
 			
-		public void TestFinished (TestResult result)
+		public void TestFinished (ITestResult res)
 		{
+			var result = res as TestResult;
 			AndroidRunner.Results [result.Test.FullName ?? result.Test.Name] = result;
 			
 			if (result.Test is TestSuite) {
-				if (!result.IsError && !result.IsFailure && !result.IsSuccess && !result.Executed)
+				if (!result.IsFailure() && !result.IsSuccess() && !result.IsIgnored())
 					Writer.WriteLine ("\t[INFO] {0}", result.Message);
 				
 				var diff = DateTime.UtcNow - time.Pop ();
 				Writer.WriteLine ("{0} : {1} ms", result.Test.Name, diff.TotalMilliseconds);
 			} else {
-				if (result.IsSuccess) {
-					Writer.Write ("\t{0} ", result.Executed ? "[PASS]" : "[IGNORED]");
-				} else if (result.IsFailure || result.IsError) {
+				if (result.IsSuccess()) {
+					Writer.Write ("\t{0} ", !result.IsIgnored() ? "[PASS]" : "[IGNORED]");
+				} else if (result.IsFailure()) {
 					Writer.Write ("\t[FAIL] ");
 				} else {
 					Writer.Write ("\t[INFO] ");
@@ -159,6 +171,28 @@ namespace Android.NUnitLite {
 				}
 			}
 		}
+
+		public TestResult Run (NUnit.Framework.Internal.Test test)
+		{
+			Result = null;
+			TestExecutionContext current = TestExecutionContext.CurrentContext;
+            current.WorkDirectory = Environment.CurrentDirectory;
+			current.Listener = this;
+			WorkItem wi = test.CreateWorkItem (Filter);
+			wi.Execute (current);
+			Result = wi.Result;
+			return Result;
+		}
+
+        static TestSuite FindSuite(ITest test)
+        {
+            if (test == null) {
+                return null;
+            }
+
+            var ts = test as TestSuite;
+            return ts ?? FindSuite(test.Parent);
+        }
 		
 		static AndroidRunner runner = new AndroidRunner ();
 		
@@ -180,6 +214,10 @@ namespace Android.NUnitLite {
 		
 		static public IDictionary<string,TestResult> Results {
 			get { return results; }
+		}
+
+		public void TestOutput (TestOutput testOutput)
+		{
 		}
 	}
 }

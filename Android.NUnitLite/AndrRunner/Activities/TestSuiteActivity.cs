@@ -22,7 +22,9 @@ using Android.OS;
 using Android.Widget;
 
 using MonoDroid.Dialog;
-using NUnitLite;
+using NUnit.Framework.Internal;
+using NUnit.Framework.Api;
+using System.Collections.Generic;
 
 namespace Android.NUnitLite.UI {
 
@@ -38,18 +40,22 @@ namespace Android.NUnitLite.UI {
 			base.OnCreate (bundle);
 
 			test_suite = Intent.GetStringExtra ("TestSuite");
-			suite = AndroidRunner.Suites [test_suite];
+            if (!AndroidRunner.Suites.TryGetValue(test_suite, out suite)) {
+                suite = null;
+            }
 
 			var menu = new RootElement (String.Empty);
 			
 			main = new Section (test_suite);
-			foreach (ITest test in suite.Tests) {
-				TestSuite ts = test as TestSuite;
-				if (ts != null)
-					main.Add (new TestSuiteElement (ts));
-				else
-					main.Add (new TestCaseElement (test as TestCase));
-			}
+            if (suite != null) {
+                foreach (ITest test in suite.Tests) {
+                    TestSuite ts = test as TestSuite;
+                    if (ts != null)
+                        main.Add(new TestSuiteElement(ts, AndroidRunner.Runner));
+                    else
+                        main.Add(new TestCaseElement(test as TestMethod, AndroidRunner.Runner));
+                }
+            }
 			menu.Add (main);
 
 			Section options = new Section () {
@@ -70,17 +76,22 @@ namespace Android.NUnitLite.UI {
 			if (!runner.OpenWriter ("Run " + test_suite, this))
 				return;
 			
+            var results = default(TestResult);
 			try {
-				foreach (ITest test in suite.Tests) {
-					test.Run (runner);
-				}
+                results = AndroidRunner.Runner.Run(suite);
 			}
 			finally {
 				runner.CloseWriter ();
 			}
 			
+            int index = 0;
 			foreach (TestElement te in main) {
-				te.Update ();
+                if (results == null || index >= results.Children.Count) {
+                    te.Update();
+                    continue;
+                }
+
+                te.Update (results.Children[index++] as TestResult);
 			}
 		}
 	}

@@ -20,54 +20,48 @@ using Android.App;
 using Android.Content;
 using Android.Views;
 
-using NUnitLite;
+using NUnit.Framework.Internal;
+using NUnit.Framework;
+using NUnit.Framework.Api;
+using MonoDroid.NUnit;
 
 namespace Android.NUnitLite.UI {
 	
 	class TestSuiteElement : TestElement {
 
-		public TestSuiteElement (TestSuite suite) : base (suite)
+		public TestSuiteElement (TestSuite suite, AndroidRunner runner) : base (suite, runner)
 		{
 			if (Suite.TestCaseCount > 0)
 				Indicator = ">"; // hint there's more
+
+            Caption = suite.FullName;
 		}
 		
 		public TestSuite Suite {
 			get { return Test as TestSuite; }
 		}
 		
-		protected override string GetCaption ()
+		public override void Update ()
 		{
-			int count = Suite.TestCaseCount;
-			string caption = String.Format ("<b>{0}</b><br>", Suite.Name);
-			if (count == 0) {
-				caption += "<font color='#ff7f00'>no test was found inside this suite</font>";
-			} else if (Result == null) {
-				caption += String.Format ("<font color='green'><b>{0}</b> test case{1}, <i>{2}</i></font>", 
-					count, count == 1 ? String.Empty : "s", Suite.RunState);
+            if (Result.IsIgnored()) {
+                Caption = String.Format("<b>{0}</b>:\n <font color='#FF7700'>{1}</font>", 
+                    Suite.FullName, Result.GetMessage()); 
+            } else if (Result.IsSuccess()) {
+                int counter = Result.AssertCount;
+                Caption = String.Format("<b>{0}</b>:\n <font color='green'>Success! {1} ms for {2} assertion{3}</font>",
+                    Suite.FullName,
+                    Result.Duration.TotalMilliseconds, counter,
+                    counter == 1 ? String.Empty : "s");
+            } else if (Result.IsInconclusive()) {
+                Caption = String.Format("<b>{0}</b>:\n <font color='blue'>{1}</font>", Suite.FullName, Result.GetMessage ());
+            } else if (Result.IsFailure ()) {
+                Caption = String.Format("<b>{0}</b>:\n <font color='red'>{1}</font>", Suite.FullName, Result.GetMessage ());
 			} else {
-				int error = 0;
-				int failure = 0;
-				int success = 0;
-				foreach (TestResult tr in Result.Results) {
-					if (tr.IsError)
-						error++;
-					else if (tr.IsFailure)
-						failure++;
-					else if (tr.IsSuccess)
-						success++;
-				}
-				
-				if (Result.IsSuccess) {
-					caption += String.Format ("<font color='green'><b>Success!</b> {0} test{1}</font>",
-						success, success == 1 ? String.Empty : "s");
-				} else if (Result.Executed) {
-					caption += String.Format ("<font color='green'>{0} success,</font> <font color='red'>{1} failure{2}, {3} error{4}</font>", 
-						success, failure, failure > 1 ? "s" : String.Empty,
-						error, error > 1 ? "s" : String.Empty);
-				}
+				// Assert.Ignore falls into this
+				Caption = Result.GetMessage ();
 			}
-			return caption;
+
+            SetCaption(Caption);
 		}
 
 		public override View GetView (Context context, View convertView, ViewGroup parent)

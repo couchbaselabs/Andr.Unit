@@ -26,14 +26,15 @@ using Android.Views;
 using Android.Widget;
 using MonoDroid.Dialog;
 
-using NUnitLite;
-using NUnitLite.Runner;
+using NUnit.Framework.Internal;
+using NUnit.Framework.Api;
 
 namespace Android.NUnitLite.UI {
 
     public class RunnerActivity : Activity {
 		
 		Section main;
+		NUnitLiteTestAssemblyBuilder builder = new NUnitLiteTestAssemblyBuilder ();
 		
 		public RunnerActivity ()
 		{
@@ -59,7 +60,7 @@ namespace Android.NUnitLite.UI {
 			
 			main = new Section ("Test Suites");
 			foreach (TestSuite suite in AndroidRunner.AssemblyLevel) {
-				main.Add (new TestSuiteElement (suite));
+				main.Add (new TestSuiteElement (suite, Runner));
 			}
 			menu.Add (main);
 
@@ -100,7 +101,8 @@ namespace Android.NUnitLite.UI {
 			// once since we need to share them across most activities
 			if (!Initialized) {
 				// TestLoader.Load always return a TestSuite so we can avoid casting many times
-				TestSuite ts = TestLoader.Load (assembly) as TestSuite;
+
+                TestSuite ts = builder.Build(assembly, new Dictionary<string, object>());
 				AndroidRunner.AssemblyLevel.Add (ts);
 				Add (ts);
 			}
@@ -108,7 +110,11 @@ namespace Android.NUnitLite.UI {
 		
 		void Add (TestSuite suite)
 		{
-			AndroidRunner.Suites.Add (suite.FullName ?? suite.Name, suite);
+            var name = suite.FullName ?? suite.Name;
+            if (!AndroidRunner.Suites.ContainsKey(name)) {
+                AndroidRunner.Suites.Add(suite.FullName ?? suite.Name, suite);
+            }
+
 			foreach (ITest test in suite.Tests) {
 				TestSuite ts = (test as TestSuite);
 				if (ts != null)
@@ -123,7 +129,7 @@ namespace Android.NUnitLite.UI {
 			
 			try {
 				foreach (TestSuite suite in AndroidRunner.AssemblyLevel) {
-					suite.Run (Runner);
+					Runner.Run(suite);
 				}
 			}
 			finally {

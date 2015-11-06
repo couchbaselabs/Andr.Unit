@@ -23,7 +23,7 @@ using MonoDroid.Dialog;
 
 namespace Android.NUnitLite.UI {
 	
-	public class ActionElement : StringElement {
+    class ActionElement : FormattedElement {
 		
 		Action action;
 		
@@ -36,10 +36,13 @@ namespace Android.NUnitLite.UI {
 		public override View GetView (Context context, View convertView, ViewGroup parent)
 		{
 			View view = base.GetView (context, convertView, parent);
-			view.Click += delegate {
-				// FIXME: show activity/progress
-				action ();
-			};
+            if (view != null) {
+                view.Click += delegate
+                {
+                    // FIXME: show activity/progress
+                    action();
+                };
+            }
 			return view;
 		}
 	}
