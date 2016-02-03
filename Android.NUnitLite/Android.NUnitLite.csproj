@@ -39,7 +39,6 @@
     <Reference Include="System.Core" />
     <Reference Include="Mono.Android" />
   </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath)\Novell\Novell.MonoDroid.CSharp.targets" />
   <ItemGroup>
     <Compile Include="AndrRunner\Elements\TestSuiteElement.cs" />
     <Compile Include="AndrRunner\Elements\ActivityElement.cs" />
@@ -861,6 +860,7 @@
       <Link>framework\Runner\OutputWriters\OutputWriter.cs</Link>
     </Compile>
     <Compile Include="AndrRunner\TestRocks.cs" />
+    <Compile Include="framework\CollectionAssert.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="AndrRunner\" />
@@ -912,4 +912,5 @@
       <Name>MonoDroid.Dialog</Name>
     </ProjectReference>
   </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
 </Project>
