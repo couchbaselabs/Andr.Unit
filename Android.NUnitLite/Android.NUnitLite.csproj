@@ -11,6 +11,8 @@
     <MonoAndroidResourcePrefix>Resources</MonoAndroidResourcePrefix>
     <AssemblyName>Android.NUnitLite</AssemblyName>
     <ReleaseVersion>1.1.1</ReleaseVersion>
+    <TargetFrameworkVersion>v4.0.3</TargetFrameworkVersion>
+    <AndroidUseLatestPlatformSdk>False</AndroidUseLatestPlatformSdk>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -861,6 +863,7 @@
     </Compile>
     <Compile Include="AndrRunner\TestRocks.cs" />
     <Compile Include="framework\CollectionAssert.cs" />
+    <Compile Include="framework\Assert.Comparisons.cs" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="AndrRunner\" />
@@ -906,11 +909,11 @@
       <Link>framework\nunitlite.framework.build.moved</Link>
     </None>
   </ItemGroup>
+  <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
   <ItemGroup>
     <ProjectReference Include="..\..\MonoDroid.Dialog\MonoDroid.Dialog\MonoDroid.Dialog.csproj">
       <Project>{33044C7B-47A4-4113-A61A-EB429407F818}</Project>
       <Name>MonoDroid.Dialog</Name>
     </ProjectReference>
   </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath)\Xamarin\Android\Xamarin.Android.CSharp.targets" />
 </Project>
