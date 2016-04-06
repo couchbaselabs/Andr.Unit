@@ -75,6 +75,10 @@ namespace Android.NUnitLite.UI {
 					return;
 
 				var suite = (TestCase.Parent as TestSuite);
+                while(suite != null && suite.arguments == null) {
+                    suite = suite.Parent as TestSuite;
+                }
+
 				var testContext = TestExecutionContext.CurrentContext;
                 testContext.TestObject = Reflect.Construct (TestCase.Method.ReflectedType, suite.arguments);
 
