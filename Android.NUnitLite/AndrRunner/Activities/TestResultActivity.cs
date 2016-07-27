@@ -39,7 +39,7 @@ namespace Android.NUnitLite.UI {
 			ITestResult result = AndroidRunner.Results [test_case];
 
 			string error = String.Format ("<b>{0}<b><br><font color='grey'>{1}</font>", 
-				result.Message, result.StackTrace.Replace (System.Environment.NewLine, "<br>"));
+				result?.Message, result?.StackTrace?.Replace (System.Environment.NewLine, "<br>"));
 			
 			var menu = new RootElement (String.Empty) {
 				new Section (test_case) {
