@@ -11,7 +11,7 @@
     <MonoAndroidResourcePrefix>Resources</MonoAndroidResourcePrefix>
     <AssemblyName>Android.NUnitLite</AssemblyName>
     <ReleaseVersion>1.1.1</ReleaseVersion>
-    <TargetFrameworkVersion>v4.0.3</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v6.0</TargetFrameworkVersion>
     <AndroidUseLatestPlatformSdk>true</AndroidUseLatestPlatformSdk>
 	<AndroidSdkBuildToolsVersion>23.0.3</AndroidSdkBuildToolsVersion>
   </PropertyGroup>
